@@ -163,7 +163,7 @@ def get_pyttsx3_engine_cached() -> 'pyttsx3.Engine | None':
         return None
 
 @st.cache_resource
-def get_yolo_model() -> 'YOLO' | None:
+def get_yolo_model() -> Optional['YOLO']:
     """Loads and caches the YOLO model."""
     if not YOLO_ENABLED:
         return None
