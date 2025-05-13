@@ -14,32 +14,32 @@ import time  # Add this import near the top with other imports
 import streamlit.components.v1 as components
 import numpy as np # For OpenCV frame manipulation
 from typing import Optional # Add this import for Optional type hints
+# try:
+#     from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration
+#     import av
+#     WEBRTC_ENABLED = True
+# except ImportError:
+#     WEBRTC_ENABLED = False
+# try:
+#     from ultralytics import YOLO
+#     YOLO_ENABLED = True
+# except ImportError:
+#     YOLO_ENABLED = False
 try:
-    from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration
-    import av
-    WEBRTC_ENABLED = True
-except ImportError:
-    WEBRTC_ENABLED = False
-try:
-    from ultralytics import YOLO
-    YOLO_ENABLED = True
-except ImportError:
-    YOLO_ENABLED = False
-try:
-    import openai
+    # import openai # Commented out for removing camera/vision
     from PIL import Image
-    import base64
-    from io import BytesIO
-    OPENAI_ENABLED = True
-    PILLOW_ENABLED = True
-except ImportError:
-    OPENAI_ENABLED = False
+    # import base64 # Commented out
+    # from io import BytesIO # Commented out
+    OPENAI_ENABLED = False # Manually set to False as openai and its helpers are commented
+    PILLOW_ENABLED = True  # If 'from PIL import Image' succeeds
+except ImportError: # This block now primarily catches PIL import failure
+    OPENAI_ENABLED = False # Stays False
     PILLOW_ENABLED = False # Pillow is also used by CLIP, so this affects CLIP_ENABLED too
 
-try:
-    import cv2
-except ImportError:
-    cv2 = None
+# try:
+#     import cv2
+# except ImportError:
+#     cv2 = None
 
 try:
     from transformers import CLIPModel, CLIPProcessor
@@ -124,17 +124,17 @@ def get_rag_manager() -> RAGManager | None:
         st.sidebar.error(f"Failed to initialize RAGManager: {e}")
         return None
 
-@st.cache_resource
-def get_yolo_model() -> Optional['YOLO']:
-    """Loads and caches the YOLO model."""
-    if not YOLO_ENABLED:
-        return None
-    try:
-        model = YOLO("yolov8n.pt")  # Or yolov8s.pt, yolov8m.pt for different sizes/accuracies
-        return model
-    except Exception as e:
-        st.sidebar.error(f"Failed to load YOLO model: {e}")
-        return None
+# @st.cache_resource
+# def get_yolo_model() -> Optional['YOLO']:
+#     """Loads and caches the YOLO model."""
+#     if not YOLO_ENABLED:
+#         return None
+#     try:
+#         model = YOLO("yolov8n.pt")  # Or yolov8s.pt, yolov8m.pt for different sizes/accuracies
+#         return model
+#     except Exception as e:
+#         st.sidebar.error(f"Failed to load YOLO model: {e}")
+#         return None
 
 @st.cache_resource
 def get_clip_model_and_processor() -> tuple[Optional['CLIPModel'], Optional['CLIPProcessor']]:
@@ -164,7 +164,7 @@ api_keys["OPENAI_API_KEY"] = get_env_variable("OPENAI_API_KEY")
 
 groq_client = get_groq_client(api_keys["GROQ_API_KEY"])
 rag_manager = get_rag_manager()
-yolo_model_instance = get_yolo_model()
+# yolo_model_instance = get_yolo_model() # Commented out
 clip_model_instance, clip_processor_instance = get_clip_model_and_processor()
 
 # Initialize global variables for CLIP local search to prevent NameError
@@ -746,246 +746,254 @@ def display_chat_history():
                 else: # Fallback for completely unknown message type
                     st.markdown("Received an image search result in an unexpected format.")
 
-# Placeholder for a function that would use an image captioning model
-def get_image_description_from_image_data(image_data_or_frame, source_type: str) -> str:
-    """
-    Placeholder: Simulates getting a description from image data (OpenCV frame).
-    In a real implementation, this would involve sending the image_file_object's
-    content to an image captioning model.
-    'source_type' can be "live view" or "captured picture".
-    """
-    if image_data_or_frame is None:
-        return "Error: No image data received."
+# # Placeholder for a function that would use an image captioning model
+# def get_image_description_from_image_data(image_data_or_frame, source_type: str) -> str:
+#     """
+#     Placeholder: Simulates getting a description from image data (OpenCV frame).
+#     In a real implementation, this would involve sending the image_file_object's
+#     content to an image captioning model.
+#     'source_type' can be "live view" or "captured picture".
+#     """
+#     if image_data_or_frame is None:
+#         return "Error: No image data received."
 
-    # This function now always expects an OpenCV frame (NumPy array)
-    is_cv_frame = isinstance(image_data_or_frame, np.ndarray)
+#     # This function now always expects an OpenCV frame (NumPy array)
+#     is_cv_frame = isinstance(image_data_or_frame, np.ndarray)
     
-    # Simulate dynamic content or detected movement
-    # In a real scenario, you'd analyze frame_data_url for actual movement.
-    current_time_str = datetime.now().strftime("%H:%M:%S")
+#     # Simulate dynamic content or detected movement
+#     # In a real scenario, you'd analyze frame_data_url for actual movement.
+#     current_time_str = datetime.now().strftime("%H:%M:%S")
     
-    # Cycle through a few mock descriptions to simulate change
-    if 'mock_scene_state' not in st.session_state:
-        st.session_state.mock_scene_state = 0
+#     # Cycle through a few mock descriptions to simulate change
+#     if 'mock_scene_state' not in st.session_state:
+#         st.session_state.mock_scene_state = 0
     
-    descriptions = [
-        f"At {current_time_str}, the {source_type} shows a scene with a desk and a chair. A coffee mug is on the desk.",
-        f"At {current_time_str}, the {source_type} indicates a person might have just left the room. The chair is slightly pushed out.",
-        f"At {current_time_str}, the {source_type} captured a window with daylight outside. The coffee mug remains.",
-        f"At {current_time_str}, this {source_type} shows a laptop on the desk, which appears to be closed.",
-        f"At {current_time_str}, the {source_type} caught a glimpse of a bookshelf in the background with several books."
-    ]
+#     descriptions = [
+#         f"At {current_time_str}, the {source_type} shows a scene with a desk and a chair. A coffee mug is on the desk.",
+#         f"At {current_time_str}, the {source_type} indicates a person might have just left the room. The chair is slightly pushed out.",
+#         f"At {current_time_str}, the {source_type} captured a window with daylight outside. The coffee mug remains.",
+#         f"At {current_time_str}, this {source_type} shows a laptop on the desk, which appears to be closed.",
+#         f"At {current_time_str}, the {source_type} caught a glimpse of a bookshelf in the background with several books."
+#     ]
     
-    description = descriptions[st.session_state.mock_scene_state % len(descriptions)]
-    st.session_state.mock_scene_state += 1
+#     description = descriptions[st.session_state.mock_scene_state % len(descriptions)]
+#     st.session_state.mock_scene_state += 1
     
-    return description
+#     return description
 
-# Custom video processor for streamlit-webrtc
-class CameraVideoProcessor(VideoProcessorBase):
-    def __init__(self):
-        self.latest_frame = None
+# # Custom video processor for streamlit-webrtc
+# class CameraVideoProcessor(VideoProcessorBase):
+#     def __init__(self):
+#         self.latest_frame = None
 
-    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
-        img = frame.to_ndarray(format="bgr24")
-        self.latest_frame = img
-        return av.VideoFrame.from_ndarray(img, format="bgr24")
+#     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+#         img = frame.to_ndarray(format="bgr24")
+#         self.latest_frame = img
+#         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
+# RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}) # Commented out
 
-def create_camera_ui():
-    """Creates the camera UI component using streamlit-webrtc for live feed."""
-    st.header("📹 Live Camera & Snapshot Analysis")
+# def create_camera_ui(): # Commented out
+#     """Creates the camera UI component using streamlit-webrtc for live feed."""
+#     st.header("📹 Live Camera & Snapshot Analysis")
     
-    # Initialize states
-    if 'camera_chat' not in st.session_state:
-        st.session_state.camera_chat = []
-    if 'captured_frame' not in st.session_state: # For the snapshot from webrtc
-        st.session_state.captured_frame = None
-    if 'analyzed_image_with_boxes' not in st.session_state: # For YOLO output image (RGB)
-        st.session_state.analyzed_image_with_boxes = None
-    if 'detected_labels' not in st.session_state: # For YOLO labels
-        st.session_state.detected_labels = None
-    if 'openai_vision_response' not in st.session_state: # For OpenAI Vision text response
-        st.session_state.openai_vision_response = None
-    if 'webrtc_ctx' not in st.session_state:
-        st.session_state.webrtc_ctx = None # To store webrtc_streamer context
+#     # Initialize states
+#     if 'camera_chat' not in st.session_state:
+#         st.session_state.camera_chat = []
+#     if 'captured_frame' not in st.session_state: # For the snapshot from webrtc
+#         st.session_state.captured_frame = None
+#     if 'analyzed_image_with_boxes' not in st.session_state: # For YOLO output image (RGB)
+#         st.session_state.analyzed_image_with_boxes = None
+#     if 'detected_labels' not in st.session_state: # For YOLO labels
+#         st.session_state.detected_labels = None
+#     if 'openai_vision_response' not in st.session_state: # For OpenAI Vision text response
+#         st.session_state.openai_vision_response = None
+#     if 'webrtc_ctx' not in st.session_state:
+#         st.session_state.webrtc_ctx = None # To store webrtc_streamer context
 
-    # Create two columns: camera and chat
-    cam_col, chat_col = st.columns([0.7, 0.3])
+#     # Create two columns: camera and chat
+#     cam_col, chat_col = st.columns([0.7, 0.3])
     
-    with cam_col:
-        st.subheader("Live Camera Feed")
-        if not WEBRTC_ENABLED:
-            st.error("WebRTC components are not available. Please install `streamlit-webrtc` and `av`. Camera tab will not function.")
-        else:
-            ctx = webrtc_streamer(
-                key="live_camera_streamer",
-                mode=WebRtcMode.SENDRECV,
-                rtc_configuration=RTC_CONFIGURATION,
-                video_processor_factory=CameraVideoProcessor,
-                media_stream_constraints={"video": True, "audio": False},
-                async_processing=True,
-            )
-            # st.session_state.webrtc_ctx = ctx # Storing full context might not be necessary if only processor is used
+#     with cam_col:
+#         st.subheader("Live Camera Feed")
+#         if not WEBRTC_ENABLED:
+#             st.error("WebRTC components are not available. Please install `streamlit-webrtc` and `av`. Camera tab will not function.")
+#         else:
+#             ctx = webrtc_streamer(
+#                 key="live_camera_streamer",
+#                 mode=WebRtcMode.SENDRECV,
+#                 rtc_configuration=RTC_CONFIGURATION,
+#                 video_processor_factory=CameraVideoProcessor,
+#                 media_stream_constraints={"video": True, "audio": False},
+#                 async_processing=True,
+#             )
+#             # st.session_state.webrtc_ctx = ctx # Storing full context might not be necessary if only processor is used
 
-            if ctx.video_processor:
-                if st.button("📸 Capture Frame", key="capture_frame_button", use_container_width=True):
-                    if ctx.video_processor.latest_frame is not None:
-                        st.session_state.captured_frame = ctx.video_processor.latest_frame.copy()
-                        st.session_state.analyzed_image_with_boxes = None # Clear previous analysis
-                        st.session_state.detected_labels = None
-                        st.session_state.openai_vision_response = None
+#             if ctx.video_processor:
+#                 if st.button("📸 Capture Frame", key="capture_frame_button", use_container_width=True):
+#                     if ctx.video_processor.latest_frame is not None:
+#                         st.session_state.captured_frame = ctx.video_processor.latest_frame.copy()
+#                         st.session_state.analyzed_image_with_boxes = None # Clear previous analysis
+#                         st.session_state.detected_labels = None
+#                         st.session_state.openai_vision_response = None
                         
-                        current_time = datetime.now()
-                        primary_analysis_done = False # Flag to track if primary AI observation is set
+#                         current_time = datetime.now()
+#                         primary_analysis_done = False # Flag to track if primary AI observation is set
 
-                        # --- OpenAI GPT-4 Vision Analysis ---
-                        if OPENAI_ENABLED and PILLOW_ENABLED and cv2 and api_keys.get("OPENAI_API_KEY"):
-                            try:
-                                with st.spinner("Analyzing with OpenAI GPT-4 Vision..."):
-                                    # Convert captured OpenCV BGR frame to RGB PIL Image
-                                    img_pil_rgb = Image.fromarray(cv2.cvtColor(st.session_state.captured_frame, cv2.COLOR_BGR2RGB))
+#                         # --- OpenAI GPT-4 Vision Analysis ---
+#                         if OPENAI_ENABLED and PILLOW_ENABLED and cv2 and api_keys.get("OPENAI_API_KEY"):
+#                             try:
+#                                 with st.spinner("Analyzing with OpenAI GPT-4 Vision..."):
+#                                     # Convert captured OpenCV BGR frame to RGB PIL Image
+#                                     img_pil_rgb = Image.fromarray(cv2.cvtColor(st.session_state.captured_frame, cv2.COLOR_BGR2RGB))
                                     
-                                    buffered = BytesIO()
-                                    img_pil_rgb.save(buffered, format="PNG") # PNG is good for vision
-                                    img_bytes = buffered.getvalue()
-                                    img_base64 = base64.b64encode(img_bytes).decode()
+#                                     buffered = BytesIO()
+#                                     img_pil_rgb.save(buffered, format="PNG") # PNG is good for vision
+#                                     img_bytes = buffered.getvalue()
+#                                     img_base64 = base64.b64encode(img_bytes).decode()
 
-                                    # Initialize OpenAI client (New SDK style)
-                                    client = openai.OpenAI(api_key=api_keys["OPENAI_API_KEY"])
-                                    response = client.chat.completions.create( # Use the client instance
-                                        model="gpt-4o", # Updated to the latest vision-capable model
-                                        messages=[
-                                            {"role": "user", "content": [
-                                                {"type": "text", "text": "Describe this image concisely. What are the main elements or actions?"},
-                                                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_base64}"}}
-                                            ]}
-                                        ], # Corrected: messages is a list of dicts
-                                        max_tokens=500 # As per your new snippet
-                                    )
-                                    vision_text_response = response.choices[0].message.content
-                                    st.session_state.openai_vision_response = vision_text_response
-                                    ai_observation_message = f"OpenAI Vision analysis: {vision_text_response}"
-                                    st.session_state.camera_chat.append(("AI", ai_observation_message, current_time))
-                                    primary_analysis_done = True
-                            except Exception as e:
-                                # More specific error handling for OpenAI API
-                                if isinstance(e, openai.APIError):
-                                    if 'insufficient_quota' in str(e).lower(): # Check for quota issue
-                                        st.error("OpenAI API Error: You've run out of OpenAI API credits. Please check your billing or try later.")
-                                        st.session_state.openai_vision_response = "OpenAI Vision Error: Insufficient quota."
-                                    else:
-                                        st.error(f"OpenAI API Error: {e}")
-                                        st.session_state.openai_vision_response = f"OpenAI Vision Error: {e}"
-                                else: # Catch other potential exceptions during the process
-                                    st.error(f"An unexpected error occurred during OpenAI Vision analysis: {e}")
-                                    st.session_state.openai_vision_response = f"OpenAI Vision Error: Unexpected error - {e}"
+#                                     # Initialize OpenAI client (New SDK style)
+#                                     client = openai.OpenAI(api_key=api_keys["OPENAI_API_KEY"])
+#                                     response = client.chat.completions.create( # Use the client instance
+#                                         model="gpt-4o", # Updated to the latest vision-capable model
+#                                         messages=[
+#                                             {"role": "user", "content": [
+#                                                 {"type": "text", "text": "Describe this image concisely. What are the main elements or actions?"},
+#                                                 {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_base64}"}}
+#                                             ]}
+#                                         ], # Corrected: messages is a list of dicts
+#                                         max_tokens=500 # As per your new snippet
+#                                     )
+#                                     vision_text_response = response.choices[0].message.content
+#                                     st.session_state.openai_vision_response = vision_text_response
+#                                     ai_observation_message = f"OpenAI Vision analysis: {vision_text_response}"
+#                                     st.session_state.camera_chat.append(("AI", ai_observation_message, current_time))
+#                                     primary_analysis_done = True
+#                             except Exception as e:
+#                                 # More specific error handling for OpenAI API
+#                                 if isinstance(e, openai.APIError):
+#                                     if 'insufficient_quota' in str(e).lower(): # Check for quota issue
+#                                         st.error("OpenAI API Error: You've run out of OpenAI API credits. Please check your billing or try later.")
+#                                         st.session_state.openai_vision_response = "OpenAI Vision Error: Insufficient quota."
+#                                     else:
+#                                         st.error(f"OpenAI API Error: {e}")
+#                                         st.session_state.openai_vision_response = f"OpenAI Vision Error: {e}"
+#                                 else: # Catch other potential exceptions during the process
+#                                     st.error(f"An unexpected error occurred during OpenAI Vision analysis: {e}")
+#                                     st.session_state.openai_vision_response = f"OpenAI Vision Error: Unexpected error - {e}"
                         
-                        # --- YOLO Analysis (runs for visual output, and for chat if OpenAI failed) ---
-                        if yolo_model_instance and cv2 :
-                            with st.spinner("Running YOLO object detection..."):
-                                img_rgb_for_yolo = cv2.cvtColor(st.session_state.captured_frame, cv2.COLOR_BGR2RGB)
-                                results_yolo = yolo_model_instance(img_rgb_for_yolo)[0]
-                                st.session_state.analyzed_image_with_boxes = results_yolo.plot() # This is RGB
-                                st.session_state.detected_labels = [yolo_model_instance.names[int(cls)] for cls in results_yolo.boxes.cls]
+#                         # --- YOLO Analysis (runs for visual output, and for chat if OpenAI failed) ---
+#                         if yolo_model_instance and cv2 :
+#                             with st.spinner("Running YOLO object detection..."):
+#                                 img_rgb_for_yolo = cv2.cvtColor(st.session_state.captured_frame, cv2.COLOR_BGR2RGB)
+#                                 results_yolo = yolo_model_instance(img_rgb_for_yolo)[0]
+#                                 st.session_state.analyzed_image_with_boxes = results_yolo.plot() # This is RGB
+#                                 st.session_state.detected_labels = [yolo_model_instance.names[int(cls)] for cls in results_yolo.boxes.cls]
                                 
-                            if not primary_analysis_done: # If OpenAI didn't set the primary message
-                                h, w, _ = st.session_state.captured_frame.shape
-                                labels_str = ", ".join(st.session_state.detected_labels) if st.session_state.detected_labels else "No objects detected"
-                                ai_observation_message_yolo = f"YOLO detected in picture ({w}x{h}): {labels_str}."
-                                st.session_state.camera_chat.append(("AI", ai_observation_message_yolo, current_time))
-                                primary_analysis_done = True
+#                             if not primary_analysis_done: # If OpenAI didn't set the primary message
+#                                 h, w, _ = st.session_state.captured_frame.shape
+#                                 labels_str = ", ".join(st.session_state.detected_labels) if st.session_state.detected_labels else "No objects detected"
+#                                 ai_observation_message_yolo = f"YOLO detected in picture ({w}x{h}): {labels_str}."
+#                                 st.session_state.camera_chat.append(("AI", ai_observation_message_yolo, current_time))
+#                                 primary_analysis_done = True
                         
-                        # --- Fallback to Mock Analysis ---
-                        if not primary_analysis_done:
-                            with st.spinner("Analyzing captured picture (mock)..."):
-                                visual_description = get_image_description_from_image_data(st.session_state.captured_frame, source_type="captured picture")
-                                if visual_description and not visual_description.startswith("Error:"):
-                                    h, w, _ = st.session_state.captured_frame.shape
-                                    ai_observation_message_mock = f"Mock analysis of picture ({w}x{h}): {visual_description}"
-                                    st.session_state.camera_chat.append(("AI", ai_observation_message_mock, current_time))
-                                else:
-                                    st.session_state.camera_chat.append(("System", f"Mock analysis failed: {visual_description}", current_time))
+#                         # --- Fallback to Mock Analysis ---
+#                         if not primary_analysis_done:
+#                             with st.spinner("Analyzing captured picture (mock)..."):
+#                                 visual_description = get_image_description_from_image_data(st.session_state.captured_frame, source_type="captured picture")
+#                                 if visual_description and not visual_description.startswith("Error:"):
+#                                     h, w, _ = st.session_state.captured_frame.shape
+#                                     ai_observation_message_mock = f"Mock analysis of picture ({w}x{h}): {visual_description}"
+#                                     st.session_state.camera_chat.append(("AI", ai_observation_message_mock, current_time))
+#                                 else:
+#                                     st.session_state.camera_chat.append(("System", f"Mock analysis failed: {visual_description}", current_time))
 
-                        st.rerun() # Rerun to update chat and display image
-                    else:
-                        st.warning("No frame available from camera to capture.")
-            elif ctx.state.playing:
-                 st.info("Live camera feed is active. Click 'Capture Frame' to take a snapshot.")
-            else:
-                st.info("Camera is not active. The component should start it automatically if permissions are granted.")
+#                         st.rerun() # Rerun to update chat and display image
+#                     else:
+#                         st.warning("No frame available from camera to capture.")
+#             elif ctx.state.playing:
+#                  st.info("Live camera feed is active. Click 'Capture Frame' to take a snapshot.")
+#             else:
+#                 st.info("Camera is not active. The component should start it automatically if permissions are granted.")
 
-        # Display captured picture if available
-        if st.session_state.captured_frame is not None and cv2:
-            st.image(
-                cv2.cvtColor(st.session_state.captured_frame, cv2.COLOR_BGR2RGB), 
-                caption="Last Captured Picture (Original)", 
-                use_container_width=True
-            )
+#         # Display captured picture if available
+#         if st.session_state.captured_frame is not None and cv2:
+#             st.image(
+#                 cv2.cvtColor(st.session_state.captured_frame, cv2.COLOR_BGR2RGB), 
+#                 caption="Last Captured Picture (Original)", 
+#                 use_container_width=True
+#             )
         
-        # Display YOLO analyzed image if available
-        if st.session_state.analyzed_image_with_boxes is not None:
-            st.image(st.session_state.analyzed_image_with_boxes, caption="Analyzed Picture (with Detections)", use_container_width=True)
+#         # Display YOLO analyzed image if available
+#         if st.session_state.analyzed_image_with_boxes is not None:
+#             st.image(st.session_state.analyzed_image_with_boxes, caption="Analyzed Picture (with Detections)", use_container_width=True)
 
-        # Display OpenAI Vision response if available
-        if st.session_state.openai_vision_response is not None:
-            st.markdown("---")
-            st.subheader("OpenAI Vision Analysis:")
-            st.info(st.session_state.openai_vision_response)
+#         # Display OpenAI Vision response if available
+#         if st.session_state.openai_vision_response is not None:
+#             st.markdown("---")
+#             st.subheader("OpenAI Vision Analysis:")
+#             st.info(st.session_state.openai_vision_response)
 
-        # Display YOLO detected labels if available
-        if st.session_state.detected_labels is not None:
-            if st.session_state.detected_labels:
-                st.write("Detected Objects:", ", ".join(st.session_state.detected_labels))
-            else:
-                st.write("Detected Objects: None")
+#         # Display YOLO detected labels if available
+#         if st.session_state.detected_labels is not None:
+#             if st.session_state.detected_labels:
+#                 st.write("Detected Objects:", ", ".join(st.session_state.detected_labels))
+#             else:
+#                 st.write("Detected Objects: None")
 
-    with chat_col:
-        st.subheader("Picture Discussion") 
+#     with chat_col:
+#         st.subheader("Picture Discussion") 
         
-        # Display camera chat history
-        camera_chat_display_container = st.container(height=400) # Match main chat height
-        with camera_chat_display_container:
-            if 'camera_chat' in st.session_state and st.session_state.camera_chat:
-                for speaker, content, timestamp in st.session_state.camera_chat:
-                    if speaker == "User":
-                        with st.chat_message("user"):
-                            st.markdown(content)
-                    elif speaker == "AI":
-                        with st.chat_message("assistant"):
-                            st.markdown(content)
-                    elif speaker == "System":
-                        # Using a different avatar for system messages for clarity
-                        with st.chat_message("assistant", avatar="⚙️"): 
-                            st.markdown(f"*{content}*")
-            else:
-                st.caption("No discussion about captured pictures yet.")
+#         # Display camera chat history
+#         camera_chat_display_container = st.container(height=400) # Match main chat height
+#         with camera_chat_display_container:
+#             if 'camera_chat' in st.session_state and st.session_state.camera_chat:
+#                 for speaker, content, timestamp in st.session_state.camera_chat:
+#                     if speaker == "User":
+#                         with st.chat_message("user"):
+#                             st.markdown(content)
+#                     elif speaker == "AI":
+#                         with st.chat_message("assistant"):
+#                             st.markdown(content)
+#                     elif speaker == "System":
+#                         # Using a different avatar for system messages for clarity
+#                         with st.chat_message("assistant", avatar="⚙️"): 
+#                             st.markdown(f"*{content}*")
+#             else:
+#                 st.caption("No discussion about captured pictures yet.")
         
-        # Input for camera-specific chat
-        camera_user_query = st.chat_input("Ask about the captured picture...", key="cv_camera_chat_input_widget")
+#         # Input for camera-specific chat
+#         camera_user_query = st.chat_input("Ask about the captured picture...", key="cv_camera_chat_input_widget")
         
-        if camera_user_query:
-            query_time = datetime.now()
-            st.session_state.camera_chat.append(("User", camera_user_query, query_time))
+#         if camera_user_query:
+#             query_time = datetime.now()
+#             st.session_state.camera_chat.append(("User", camera_user_query, query_time))
             
-            # Get the latest AI observation (which will be about a captured picture)
-            latest_observation = "the last analyzed frame or picture" # Default
-            if 'camera_chat' in st.session_state and st.session_state.camera_chat:
-                for speaker, content, _ in reversed(st.session_state.camera_chat):
-                    if speaker == "AI" and \
-                       (content.startswith("I see in the current view:") or content.startswith("I analyzed the captured picture:")):
-                        latest_observation = content
-                        break
+#             # Get the latest AI observation (which will be about a captured picture)
+#             latest_observation = "the last analyzed frame or picture" # Default
+#             if 'camera_chat' in st.session_state and st.session_state.camera_chat:
+#                 for speaker, content, _ in reversed(st.session_state.camera_chat):
+#                     if speaker == "AI" and \
+#                        (content.startswith("I see in the current view:") or content.startswith("I analyzed the captured picture:")):
+#                         latest_observation = content
+#                         break
             
-            # Construct a prompt for the AI based on its last "visual" observation and the user's query
-            prompt_for_ai = f"Context: You previously observed '{latest_observation}'. Now, the user asks: {camera_user_query}"
+#             # Construct a prompt for the AI based on its last "visual" observation and the user's query
+#             prompt_for_ai = f"Context: You previously observed '{latest_observation}'. Now, the user asks: {camera_user_query}"
                         
-            with st.spinner("Thinking about the picture..."):
-                ai_response_to_camera = call_groq_api(prompt_for_ai)
+#             with st.spinner("Thinking about the picture..."):
+#                 ai_response_to_camera_generator = call_groq_api(prompt_for_ai) # Renamed to indicate it's a generator
             
-            st.session_state.camera_chat.append(("AI", ai_response_to_camera, datetime.now()))
-            st.rerun() # Rerun to display the new user message and AI response
+#             # Process the generator to get the full response string
+#             full_ai_response_to_camera = ""
+#             if hasattr(ai_response_to_camera_generator, '__iter__') and not isinstance(ai_response_to_camera_generator, str):
+#                 for chunk in ai_response_to_camera_generator:
+#                     full_ai_response_to_camera += chunk
+#             else:
+#                 full_ai_response_to_camera = str(ai_response_to_camera_generator) # Fallback if not a generator
+            
+#             st.session_state.camera_chat.append(("AI", full_ai_response_to_camera, datetime.now()))
+#             st.rerun() # Rerun to display the new user message and AI response
             
 
 # --- Main Application Flow ---
@@ -1016,21 +1024,21 @@ def main():
          st.sidebar.warning("`python-docx` not installed. DOCX uploads not supported. Install with `pip install python-docx`.")
     if pd is None:
          st.sidebar.warning("`pandas` not installed. CSV uploads not supported. Install with `pip install pandas`.")
-    if cv2 is None:
-        st.sidebar.warning("`opencv-python` not installed. Live camera features in the 'Camera' tab will not work. Install with `pip install opencv-python`.")
-    if not WEBRTC_ENABLED:
-        st.sidebar.error("`streamlit-webrtc` or `av` not installed. Camera tab will not function correctly. Install with `pip install streamlit-webrtc av`")
-    if not YOLO_ENABLED:
-        st.sidebar.warning("`ultralytics` not installed. YOLO object detection will not be available. Install with `pip install ultralytics`")
-    if not OPENAI_ENABLED:
-        st.sidebar.warning("`openai` library not installed. OpenAI Vision features will be disabled. Install with `pip install openai`")
-    if not PILLOW_ENABLED:
-        st.sidebar.warning("`Pillow` library not installed. Image processing for OpenAI Vision will be disabled. Install with `pip install Pillow`")
+    # if cv2 is None: # Commented out
+    #     st.sidebar.warning("`opencv-python` not installed. Live camera features in the 'Camera' tab will not work. Install with `pip install opencv-python`.")
+    # if not WEBRTC_ENABLED: # Commented out
+    #     st.sidebar.error("`streamlit-webrtc` or `av` not installed. Camera tab will not function correctly. Install with `pip install streamlit-webrtc av`")
+    # if not YOLO_ENABLED: # Commented out
+    #     st.sidebar.warning("`ultralytics` not installed. YOLO object detection will not be available. Install with `pip install ultralytics`")
+    # if not OPENAI_ENABLED: # Commented out
+    #     st.sidebar.warning("`openai` library not installed. OpenAI Vision features will be disabled. Install with `pip install openai`")
+    # if not PILLOW_ENABLED: # Commented out - PILLOW_ENABLED warning for CLIP is handled by CLIP_ENABLED warning
+    #     st.sidebar.warning("`Pillow` library not installed. Image processing for OpenAI Vision will be disabled. Install with `pip install Pillow`")
     if not CLIP_ENABLED:
         st.sidebar.warning("`transformers` or `Pillow` not installed. Advanced CLIP image search will be disabled. Install with `pip install transformers Pillow`")
 
 
-    chat_tab, camera_tab = st.tabs(["💬 Chat", "📹 Camera"])
+    chat_tab, = st.tabs(["💬 Chat"]) # Removed camera_tab
     
     with chat_tab:
         chat_history_container = st.container(height=400)
@@ -1105,8 +1113,8 @@ def main():
                      st.subheader("Extracted Content Preview:")
                      st.error(f"Could not display preview:\n{file_contents}")
 
-    with camera_tab:
-        create_camera_ui()
+    # with camera_tab: # Commented out
+    #     create_camera_ui()
 
 
 def process_uploaded_file(file_contents: str):
