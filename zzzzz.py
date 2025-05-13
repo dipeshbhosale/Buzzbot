@@ -1,4 +1,4 @@
-import os
+import oss
 import json
 from dotenv import load_dotenv
 from groq import Groq
