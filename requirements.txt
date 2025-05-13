@@ -8,6 +8,7 @@ numpy
 streamlit-webrtc
 av
 ultralytics
+pyaudio
 openai
 Pillow
 opencv-python
