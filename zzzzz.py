@@ -167,6 +167,10 @@ rag_manager = get_rag_manager()
 yolo_model_instance = get_yolo_model()
 clip_model_instance, clip_processor_instance = get_clip_model_and_processor()
 
+# Initialize global variables for CLIP local search to prevent NameError
+indexed_image_embeddings_global = None
+indexed_image_paths_global = []
+
 
 # --- Theme Application ---
 # This function applies CSS, which is fast.
