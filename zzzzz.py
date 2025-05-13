@@ -19,7 +19,7 @@ try:
     import av
     WEBRTC_ENABLED = True
 except ImportError:
-    WEBRTC_ENABLED = False # Corrected: Should be WEBRTC_ENABLED
+    WEBRTC_ENABLED = False
 try:
     from ultralytics import YOLO
     YOLO_ENABLED = True
@@ -68,11 +68,8 @@ if 'session_id' not in st.session_state:
     st.session_state['session_id'] = create_session_id()
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
-if 'voice_input_active' not in st.session_state:
-    st.session_state['voice_input_active'] = False
 if 'session_state_initialized' not in st.session_state:
     st.session_state['session_state_initialized'] = True
-
 # Must be the first Streamlit command after session state initialization
 st.set_page_config(
     page_title="Buzzbot - Your AI Assistant",
@@ -80,6 +77,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Move session state initialization to the very beginning, right after imports
+def initialize_session_state():
+    """Initializes necessary session state variables if not already present."""
+    if 'session_id' not in st.session_state:
+        st.session_state['session_id'] = create_session_id()
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = []
+    if 'voice_input_active' not in st.session_state:
+        st.session_state['voice_input_active'] = False
+    if 'session_state_initialized' not in st.session_state:
+        st.session_state['session_state_initialized'] = True
 
 # --- Configuration and Setup ---
 
@@ -141,18 +150,6 @@ def get_clip_model_and_processor() -> tuple[Optional['CLIPModel'], Optional['CLI
         st.sidebar.error(f"Failed to load CLIP model: {e}")
         return None, None
 
-# Move session state initialization to the very beginning, right after imports
-def initialize_session_state():
-    """Initializes necessary session state variables if not already present."""
-    if 'session_id' not in st.session_state:
-        st.session_state['session_id'] = create_session_id()
-    if 'chat_history' not in st.session_state:
-        st.session_state['chat_history'] = []
-    if 'voice_input_active' not in st.session_state:
-        st.session_state['voice_input_active'] = False
-    if 'session_state_initialized' not in st.session_state:
-        st.session_state['session_state_initialized'] = True
-
 # Load environment variables and initialize API clients
 api_keys = {
     "GROQ_API_KEY": None,
@@ -169,18 +166,6 @@ groq_client = get_groq_client(api_keys["GROQ_API_KEY"])
 rag_manager = get_rag_manager()
 yolo_model_instance = get_yolo_model()
 clip_model_instance, clip_processor_instance = get_clip_model_and_processor()
-
-# --- Session State Initialization ---
-def initialize_session_state():
-    """Initializes necessary session state variables if not already present."""
-    if 'session_id' not in st.session_state:
-        st.session_state['session_id'] = create_session_id()
-    if 'chat_history' not in st.session_state:
-        st.session_state['chat_history'] = []
-    if 'voice_input_active' not in st.session_state:
-        st.session_state['voice_input_active'] = False
-    if 'session_state_initialized' not in st.session_state:
-        st.session_state['session_state_initialized'] = True
 
 
 # --- Theme Application ---
