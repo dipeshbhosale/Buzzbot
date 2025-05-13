@@ -13,6 +13,7 @@ import PyPDF2 # Explicitly import PyPDF2 now that async wrapper is removed
 import time  # Add this import near the top with other imports
 import streamlit.components.v1 as components
 import numpy as np # For OpenCV frame manipulation
+from typing import Optional # Add this import for Optional type hints
 try:
     from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration
     import av
@@ -175,7 +176,7 @@ def get_yolo_model() -> Optional['YOLO']:
         return None
 
 @st.cache_resource
-def get_clip_model_and_processor() -> tuple[CLIPModel | None, CLIPProcessor | None]:
+def get_clip_model_and_processor() -> tuple[Optional['CLIPModel'], Optional['CLIPProcessor']]:
     """Loads and caches the CLIP model and processor."""
     if not CLIP_ENABLED:
         return None, None
