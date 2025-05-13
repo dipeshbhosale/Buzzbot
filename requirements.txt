@@ -14,8 +14,6 @@ opencv-python
 transformers
 python-docx
 pandas
-SpeechRecognition
-pyttsx3
 sentence-transformers
 faiss-cpu
 langchain
