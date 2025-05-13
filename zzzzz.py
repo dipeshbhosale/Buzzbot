@@ -61,15 +61,8 @@ except ImportError:
 from rag_utils import RAGManager
 from chat_history_manager import get_chat_history, create_session_id, get_or_create_groq_chain_for_session
 
-# Try importing speech recognition modules and pyttsx3
-try:
-    import speech_recognition as sr
-    import pyttsx3
-    VOICE_ENABLED = True
-except ImportError:
-    VOICE_ENABLED = False
-    # Warning will be displayed in the sidebar if disabled
-
+# Voice features are being removed
+VOICE_ENABLED = False
 # Ensure session state is initialized before any access
 if 'session_id' not in st.session_state:
     st.session_state['session_id'] = create_session_id()
@@ -77,8 +70,6 @@ if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
 if 'voice_input_active' not in st.session_state:
     st.session_state['voice_input_active'] = False
-if 'selected_theme' not in st.session_state:
-    st.session_state['selected_theme'] = "Light"
 if 'session_state_initialized' not in st.session_state:
     st.session_state['session_state_initialized'] = True
 
@@ -89,31 +80,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-# Ensure required dependencies are installed
-required_packages = {
-    'python-docx': docx,
-    'pandas': pd,
-    'PyPDF2': 'pdf_support',
-    'nest_asyncio': 'async_support', # This might be a placeholder, nest_asyncio is not directly used for core features
-    'opencv-python': cv2, # Still useful for image processing even if not for direct capture
-    'streamlit-webrtc': WEBRTC_ENABLED, # Use the boolean flag
-    'av': WEBRTC_ENABLED, # Use the boolean flag, av is a dependency of streamlit-webrtc
-    'ultralytics': YOLO_ENABLED,
-    'openai': OPENAI_ENABLED, # Pillow is a dependency for OpenAI vision part too
-    'Pillow': PILLOW_ENABLED,
-    'transformers': CLIP_ENABLED, # For CLIP model
-}
-
-missing_packages = []
-for package, module in required_packages.items():
-    if module is None:
-        missing_packages.append(f"pip install {package}")
-
-
-
-if missing_packages:
-    st.sidebar.warning("Missing packages. Install with:\n" + "\n".join(missing_packages))
 
 # --- Configuration and Setup ---
 
@@ -147,20 +113,6 @@ def get_rag_manager() -> RAGManager | None:
         return RAGManager()
     except Exception as e:
         st.sidebar.error(f"Failed to initialize RAGManager: {e}")
-        return None
-
-@st.cache_resource
-def get_pyttsx3_engine_cached() -> Optional['pyttsx3.Engine']:
-    """Initializes and returns a pyttsx3 engine, cached."""
-    if not VOICE_ENABLED:
-        return None
-    try:
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 180)
-        engine.setProperty('volume', 1.0)
-        return engine
-    except Exception as e:
-        print(f"Failed to initialize cached text-to-speech engine: {e}")
         return None
 
 @st.cache_resource
@@ -198,8 +150,6 @@ def initialize_session_state():
         st.session_state['chat_history'] = []
     if 'voice_input_active' not in st.session_state:
         st.session_state['voice_input_active'] = False
-    if 'selected_theme' not in st.session_state:
-        st.session_state['selected_theme'] = "Light"
     if 'session_state_initialized' not in st.session_state:
         st.session_state['session_state_initialized'] = True
 
@@ -220,45 +170,6 @@ rag_manager = get_rag_manager()
 yolo_model_instance = get_yolo_model()
 clip_model_instance, clip_processor_instance = get_clip_model_and_processor()
 
-# --- Mock CLIP Data and Embeddings (for demonstration) ---
-# In a real app, these would be pre-computed and loaded from a file/vector DB
-indexed_image_paths_global = []
-indexed_image_embeddings_global = None
-
-def load_mock_clip_data_and_embeddings():
-    global indexed_image_paths_global, indexed_image_embeddings_global
-    if not CLIP_ENABLED or not clip_model_instance or not clip_processor_instance:
-        return
-
-    # The automatic creation and loading of sample images from "sample_action_images"
-    # has been removed. If you want to use CLIP with pre-indexed images,
-    # you will need to populate `indexed_image_paths_global` with paths to your images
-    # and ensure their embeddings are generated and stored in
-    # `indexed_image_embeddings_global` through a different mechanism.
-    # For now, `indexed_image_paths_global` will remain empty unless populated elsewhere.
-
-    # If indexed_image_paths_global were populated (e.g., by user code), this would generate embeddings:
-    if indexed_image_paths_global:
-        try:
-            images_pil = [Image.open(fp) for fp in indexed_image_paths_global if os.path.exists(fp)]
-            if images_pil:
-                inputs = clip_processor_instance(text=None, images=images_pil, return_tensors="pt", padding=True)
-                indexed_image_embeddings_global = clip_model_instance.get_image_features(**inputs).detach().cpu().numpy()
-        except Exception as e:
-            print(f"Error generating mock CLIP embeddings: {e}")
-            indexed_image_paths_global = [] # Clear if embedding fails
-
-# Initialize TTS engine if voice is enabled
-cached_tts_engine = None
-if VOICE_ENABLED:
-    cached_tts_engine = get_pyttsx3_engine_cached()
-    if cached_tts_engine is None:
-        # If engine failed to init, effectively disable voice output
-        VOICE_ENABLED = False
-
-if CLIP_ENABLED: # Attempt to load mock data if CLIP is available
-    load_mock_clip_data_and_embeddings()
-
 # --- Session State Initialization ---
 def initialize_session_state():
     """Initializes necessary session state variables if not already present."""
@@ -268,8 +179,6 @@ def initialize_session_state():
         st.session_state['chat_history'] = []
     if 'voice_input_active' not in st.session_state:
         st.session_state['voice_input_active'] = False
-    if 'selected_theme' not in st.session_state:
-        st.session_state['selected_theme'] = "Light"
     if 'session_state_initialized' not in st.session_state:
         st.session_state['session_state_initialized'] = True
 
@@ -526,68 +435,6 @@ def call_news_api(location: str) -> str:
         return f"Error fetching news: An unexpected error occurred."
 
 
-# --- Voice Input/Output Functions ---
-
-def listen_for_voice() -> str | None:
-    """Listens for voice input using SpeechRecognition."""
-    if not VOICE_ENABLED:
-        return None
-
-    recognizer = sr.Recognizer()
-    recognizer.dynamic_energy_threshold = True
-    recognizer.energy_threshold = 4000
-    recognizer.dynamic_energy_adjustment_damping = 0.15
-    recognizer.dynamic_energy_adjustment_ratio = 1.5
-    recognizer.pause_threshold = 0.8
-    recognizer.non_speaking_duration = 0.5
-
-    status_placeholder = st.empty()
-
-    try:
-        with sr.Microphone() as source:
-            status_placeholder.info("Adjusting for ambient noise... Please be quiet.")
-            recognizer.adjust_for_ambient_noise(source, duration=1.0)
-            status_placeholder.info("🎤 Listening... Speak now!")
-            audio = recognizer.listen(source, timeout=8, phrase_time_limit=5)
-            status_placeholder.info("Processing audio...")
-            with st.spinner("Transcribing speech..."):
-                text = recognizer.recognize_google(audio, language='en-US', pfilter=0, show_all=False)
-            status_placeholder.empty()
-            return text
-
-    except sr.WaitTimeoutError:
-        status_placeholder.warning("Listening timed out. No speech detected.")
-    except sr.UnknownValueError:
-        status_placeholder.warning("Could not understand the audio. Please speak clearly.")
-    except sr.RequestError as e:
-        status_placeholder.error(f"Could not request results from speech recognition service; {e}")
-    except Exception as e:
-        status_placeholder.error(f"An unexpected error occurred during voice input: {e}")
-
-    status_placeholder.empty()
-    return None
-
-def speak_response_threaded(text: str):
-    """Speaks the given text using pyttsx3 in a separate thread."""
-    if not VOICE_ENABLED or cached_tts_engine is None:
-        return
-
-    engine = cached_tts_engine
-
-    def run_speak():
-        """Helper function to run the speaking task in a thread."""
-        try:
-            engine.setProperty('rate', 180)
-            engine.setProperty('volume', 1.0)
-            engine.say(text)
-            engine.runAndWait()
-        except Exception as e:
-            print(f"Threaded speech output error: {str(e)}")
-
-    thread = threading.Thread(target=run_speak, daemon=True)
-    thread.start()
-
-
 # --- File Processing Functions ---
 
 def process_pdf_file(uploaded_file) -> str | None:
@@ -726,7 +573,7 @@ def chatbot_response(user_input: str): # Can return str or generator
 
 response_placeholder = st.empty()
 
-def process_input(user_input: str, action_type: str, is_voice_input: bool):
+def process_input(user_input: str, action_type: str):
     """Processes user input based on selected action type."""
     if not user_input:
         return
@@ -851,15 +698,6 @@ def process_input(user_input: str, action_type: str, is_voice_input: bool):
         st.session_state.chat_history.append(("BuzzBot", response_content))
         chat_history.add_ai_message(response_content)
 
-    if is_voice_input and response_content and VOICE_ENABLED and \
-       st.session_state.chat_history[-1][0] == "BuzzBot" and \
-       not (isinstance(response_content, str) and response_content.startswith("Error:")):
-        speak_response_threaded(response_content)
-    elif is_voice_input and action_type == "Image Search" and isinstance(response_content, dict) and VOICE_ENABLED:
-        if response_content.get("type") == "image_results" and response_content.get("images"):
-            speak_response_threaded(f"I found some images for {response_content.get('query')}.")
-        elif response_content.get("type") == "image_link":
-            speak_response_threaded(f"Here's a link to images for {response_content.get('query')}.")
     st.rerun()
 
 
@@ -1183,13 +1021,6 @@ def main():
     action_options = ["Chat", "Image Search", "News", "Movie Search"]
     action_type = st.sidebar.radio("⚡ Select Action", options=action_options, key="action_radio")
 
-    if not VOICE_ENABLED:
-        st.sidebar.warning(
-            "🎤 Voice features disabled. Install required packages: `pip install SpeechRecognition pyaudio pyttsx3` (and ensure a microphone is configured)"
-        )
-    elif cached_tts_engine is None:
-         st.sidebar.warning("Failed to initialize Text-to-Speech engine. Voice output disabled.")
-
     if rag_manager is None:
          st.sidebar.warning("RAG Manager initialization failed. File upload features may not work.")
     if docx is None:
@@ -1219,32 +1050,9 @@ def main():
 
         user_query = st.chat_input("What can I help you with?", key="chat_input_main")
 
-        col_voice, col_spacer = st.columns([1, 5])
-        with col_voice:
-            if VOICE_ENABLED:
-                voice_button_label = (
-                    "🎤 Start Listening" if not st.session_state.voice_input_active else "⏹️ Stop Listening"
-                )
-                voice_button_clicked = st.button(voice_button_label, key="voice_button")
-
-                if voice_button_clicked:
-                     st.session_state.voice_input_active = not st.session_state.voice_input_active
-                     if st.session_state.voice_input_active:
-                          voice_input = listen_for_voice()
-                          st.session_state.voice_input_active = False
-                          if voice_input:
-                               st.info(f"You said: {voice_input}")
-                               process_input(voice_input, action_type, is_voice_input=True)
-                          else:
-                               st.rerun()
-                     else:
-                          st.rerun()
-
-
         if user_query:
             st.session_state.voice_input_active = False
-            process_input(user_query, action_type, is_voice_input=False)
-
+            process_input(user_query, action_type)
 
         st.markdown("---")
         with st.expander("📂 Upload a File"):
@@ -1301,7 +1109,7 @@ def main():
                     if process_file_content_button:
                         prompt_prefix = f"Analyze the content from {uploaded_file.name}:\n\n"
                         process_input(
-                            prompt_prefix + str(file_contents), action_type="Chat", is_voice_input=False
+                            prompt_prefix + str(file_contents), action_type="Chat"
                         )
 
                 elif file_contents is not None and isinstance(file_contents, str) and file_contents.startswith("Error:"):
