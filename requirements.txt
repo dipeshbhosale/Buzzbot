@@ -10,3 +10,4 @@ groq
 openai
 PyPDF2
 faiss-cpu
+pyttsx3
