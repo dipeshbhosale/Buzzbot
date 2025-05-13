@@ -149,7 +149,7 @@ def get_rag_manager() -> RAGManager | None:
         return None
 
 @st.cache_resource
-def get_pyttsx3_engine_cached() -> 'pyttsx3.Engine | None':
+def get_pyttsx3_engine_cached() -> Optional['pyttsx3.Engine']:
     """Initializes and returns a pyttsx3 engine, cached."""
     if not VOICE_ENABLED:
         return None
