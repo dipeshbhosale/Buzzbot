@@ -15,11 +15,10 @@ import streamlit.components.v1 as components
 from typing import Optional # Add this import for Optional type hints
 
 # Camera-specific and related vision/ML imports are removed:
-# streamlit_webrtc, av, ultralytics, YOLO, openai, PIL, base64, io.BytesIO, cv2, transformers, numpy
+# streamlit_webrtc, av, ultralytics, YOLO, PIL, base64, io.BytesIO, cv2, transformers, numpy
 
 WEBRTC_ENABLED = False
 YOLO_ENABLED = False
-OPENAI_ENABLED = False
 PILLOW_ENABLED = False
 CLIP_ENABLED = False
 cv2 = None # Explicitly set to None as cv2 is removed
