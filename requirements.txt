@@ -8,7 +8,6 @@ numpy
 streamlit-webrtc
 av
 ultralytics
-openai
 Pillow
 opencv-python
 transformers
